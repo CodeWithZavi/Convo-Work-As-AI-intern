@@ -57,11 +57,26 @@ class DatabaseManager:
         try:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM essays")
-            cursor.execute("ALTER SEQUENCE essays_id_seq RESTART WITH 1")
             conn.commit()
             cursor.close()
         except Error as e:
             print(f"Error clearing essays: {e}")
+        finally:
+            conn.close()
+    
+    def reset_sequence(self):
+        """Reset the ID sequence to continue from the highest ID"""
+        conn = self.get_connection()
+        if not conn:
+            return
+        
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT setval('essays_id_seq', COALESCE((SELECT MAX(id) FROM essays), 0) + 1, false)")
+            conn.commit()
+            cursor.close()
+        except Error as e:
+            print(f"Error resetting sequence: {e}")
         finally:
             conn.close()
     
@@ -163,5 +178,24 @@ class DatabaseManager:
         except Error as e:
             print(f"Error fetching ID: {e}")
             return None
+        finally:
+            conn.close()
+    
+    def delete_essay(self, essay_id):
+        """Delete essay by ID"""
+        conn = self.get_connection()
+        if not conn:
+            return False
+        
+        try:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM essays WHERE id = %s", (essay_id,))
+            rows_deleted = cursor.rowcount
+            conn.commit()
+            cursor.close()
+            return rows_deleted > 0
+        except Error as e:
+            print(f"Error deleting essay: {e}")
+            return False
         finally:
             conn.close()

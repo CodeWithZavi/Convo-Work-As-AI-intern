@@ -18,7 +18,9 @@ class Menu:
         print("2. Get essay by ID")
         print("3. Get title by ID")
         print("4. Get ID by title")
-        print("5. Exit")
+        print("5. Insert new essay")
+        print("6. Delete essay")
+        print("7. Exit")
         print("="*50)
     
     def show_all_essays(self):
@@ -76,6 +78,69 @@ class Menu:
         else:
             print("Essay not found")
     
+    def insert_new_essay(self):
+        """Insert a new essay into database"""
+        print("\nInsert New Essay")
+        print("-" * 50)
+        
+        title = input("Enter essay title: ").strip()
+        if not title:
+            print("Title cannot be empty")
+            return
+        
+        print("Enter essay content (press Enter twice to finish):")
+        content_lines = []
+        empty_count = 0
+        
+        while empty_count < 2:
+            line = input()
+            if line == "":
+                empty_count += 1
+            else:
+                empty_count = 0
+                content_lines.append(line)
+        
+        content = "\n".join(content_lines).strip()
+        
+        if not content:
+            print("Content cannot be empty")
+            return
+        
+        if self.db_manager.insert_essay(title, content):
+            print("Essay inserted successfully!")
+        else:
+            print("Failed to insert essay")
+    
+    def delete_essay(self):
+        """Delete an essay by ID"""
+        eid_input = input("Enter essay ID to delete: ").strip()
+        
+        if not eid_input.isdigit():
+            print("Invalid ID")
+            return
+        
+        essay_id = int(eid_input)
+        
+        # Show essay before deleting
+        essay = self.db_manager.get_essay_by_id(essay_id)
+        if not essay:
+            print("Essay not found")
+            return
+        
+        print(f"\nEssay to delete:")
+        print(f"ID: {essay[0]}")
+        print(f"Title: {essay[1]}")
+        
+        confirm = input("\nAre you sure you want to delete this essay? (yes/no): ").strip().lower()
+        
+        if confirm == "yes":
+            if self.db_manager.delete_essay(essay_id):
+                print("Essay deleted successfully!")
+            else:
+                print("Failed to delete essay")
+        else:
+            print("Deletion cancelled")
+    
     def run(self):
         """Run the menu loop"""
         while True:
@@ -91,6 +156,10 @@ class Menu:
             elif choice == "4":
                 self.show_id_by_title()
             elif choice == "5":
+                self.insert_new_essay()
+            elif choice == "6":
+                self.delete_essay()
+            elif choice == "7":
                 print("Exiting program.")
                 break
             else:

@@ -36,6 +36,9 @@ class Main:
             if self.db_manager.insert_essay(title, content, essay_id):
                 essays_loaded += 1
         
+        # Reset sequence to continue from the highest ID
+        self.db_manager.reset_sequence()
+        
         print(f"Essays loaded: {essays_loaded}")
     
     def run(self):
