@@ -2,6 +2,7 @@
 DatabaseManager class - Handles all PostgreSQL database operations
 """
 
+import uuid
 import psycopg2
 from psycopg2 import Error
 from .config import DB_CONFIG
@@ -36,6 +37,7 @@ class DatabaseManager:
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS essays (
                         id SERIAL PRIMARY KEY,
+                        uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
                         title VARCHAR(500) NOT NULL,
                         content TEXT NOT NULL
                     )
@@ -89,8 +91,8 @@ class DatabaseManager:
         try:
             cursor = conn.cursor()
             
-            # Get all essays ordered by current ID
-            cursor.execute("SELECT id, title, content FROM essays ORDER BY id")
+            # Get all essays ordered by current ID (including UUID)
+            cursor.execute("SELECT id, uuid, title, content FROM essays ORDER BY id")
             essays = cursor.fetchall()
             
             if not essays:
@@ -100,6 +102,7 @@ class DatabaseManager:
             cursor.execute("""
                 CREATE TEMP TABLE essays_temp (
                     new_id SERIAL PRIMARY KEY,
+                    uuid UUID NOT NULL,
                     title VARCHAR(500) NOT NULL,
                     content TEXT NOT NULL
                 )
@@ -108,17 +111,17 @@ class DatabaseManager:
             # Insert all essays into temp table (auto-assigns new sequential IDs)
             for essay in essays:
                 cursor.execute(
-                    "INSERT INTO essays_temp (title, content) VALUES (%s, %s)",
-                    (essay[1], essay[2])
+                    "INSERT INTO essays_temp (uuid, title, content) VALUES (%s, %s, %s)",
+                    (essay[1], essay[2], essay[3])
                 )
             
             # Clear original table
             cursor.execute("DELETE FROM essays")
             
-            # Copy back with new IDs
+            # Copy back with new IDs but preserve UUIDs
             cursor.execute("""
-                INSERT INTO essays (id, title, content)
-                SELECT new_id, title, content FROM essays_temp
+                INSERT INTO essays (id, uuid, title, content)
+                SELECT new_id, uuid, title, content FROM essays_temp
             """)
             
             # Drop temp table
@@ -138,24 +141,26 @@ class DatabaseManager:
             conn.close()
     
     def insert_essay(self, title, content, essay_id=None):
-        """Insert a single essay into database with specific ID"""
+        """Insert a single essay into database with specific ID and auto-generated UUID"""
         conn = self.get_connection()
         if not conn:
             return False
         
         try:
             cursor = conn.cursor()
+            essay_uuid = str(uuid.uuid4())  # Generate UUID
+            
             if essay_id:
-                # Insert with specific ID
+                # Insert with specific ID and UUID
                 cursor.execute(
-                    "INSERT INTO essays (id, title, content) VALUES (%s, %s, %s)",
-                    (essay_id, title, content)
+                    "INSERT INTO essays (id, uuid, title, content) VALUES (%s, %s, %s, %s)",
+                    (essay_id, essay_uuid, title, content)
                 )
             else:
-                # Insert with auto-increment ID
+                # Insert with auto-increment ID and generated UUID
                 cursor.execute(
-                    "INSERT INTO essays (title, content) VALUES (%s, %s)",
-                    (title, content)
+                    "INSERT INTO essays (uuid, title, content) VALUES (%s, %s, %s)",
+                    (essay_uuid, title, content)
                 )
             conn.commit()
             cursor.close()
@@ -174,7 +179,7 @@ class DatabaseManager:
         
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT id, title, content FROM essays ORDER BY id")
+            cursor.execute("SELECT id, uuid, title, content FROM essays ORDER BY id")
             essays = cursor.fetchall()
             cursor.close()
             return essays
@@ -192,7 +197,7 @@ class DatabaseManager:
         
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT id, title, content FROM essays WHERE id = %s", (essay_id,))
+            cursor.execute("SELECT id, uuid, title, content FROM essays WHERE id = %s", (essay_id,))
             essay = cursor.fetchone()
             cursor.close()
             return essay

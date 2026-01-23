@@ -33,8 +33,9 @@ class Menu:
         
         for essay in essays:
             print(f"\nID      : {essay[0]}")
-            print(f"Title   : {essay[1]}")
-            print(f"Content : {essay[2]}")
+            print(f"UUID    : {essay[1]}")
+            print(f"Title   : {essay[2]}")
+            print(f"Content : {essay[3]}")
     
     def show_essay_by_id(self):
         """Get and display essay by ID"""
@@ -48,8 +49,9 @@ class Menu:
         
         if essay:
             print(f"\nID      : {essay[0]}")
-            print(f"Title   : {essay[1]}")
-            print(f"Content : {essay[2]}")
+            print(f"UUID    : {essay[1]}")
+            print(f"Title   : {essay[2]}")
+            print(f"Content : {essay[3]}")
         else:
             print("Essay not found")
     
