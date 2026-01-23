@@ -1,4 +1,4 @@
-# UUID Implementation Guide
+UUID Implementation Guide
 
 ## What Changed? 🔄
 
