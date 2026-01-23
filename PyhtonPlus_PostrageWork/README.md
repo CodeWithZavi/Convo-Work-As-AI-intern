@@ -354,13 +354,3 @@ This project is part of internship work at Convo, Islamabad.
 AI Intern - Convo, Islamabad  
 **Repository:** [https://github.com/CodeWithZavi/Convo-Work-As-AI-intern](https://github.com/CodeWithZavi/Convo-Work-As-AI-intern)
 
----
-
-
-
-    'host': 'localhost',
-    'database': 'Essays',
-    'user': 'postgres',
-    'password': 'zavian'
-}
-`
