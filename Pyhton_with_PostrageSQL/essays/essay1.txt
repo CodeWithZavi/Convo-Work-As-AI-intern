@@ -1,0 +1,11 @@
+Introduction to Artificial Intelligence
+
+Artificial Intelligence (AI) has emerged as one of the most transformative technologies of the 21st century. At its core, AI refers to the simulation of human intelligence processes by machines, particularly computer systems. These processes include learning, reasoning, problem-solving, perception, and language understanding.
+
+The concept of AI dates back to the 1950s when Alan Turing posed the fundamental question, "Can machines think?" This question led to the development of the Turing Test, a benchmark for machine intelligence. Since then, AI has evolved from simple rule-based systems to sophisticated algorithms capable of outperforming humans in specific tasks.
+
+AI can be categorized into two main types: Narrow AI and General AI. Narrow AI, also known as Weak AI, is designed to perform specific tasks such as facial recognition, voice assistants, or playing chess. This is the type of AI we encounter in our daily lives. General AI, or Strong AI, refers to machines with the ability to understand, learn, and apply knowledge across a wide range of tasks, similar to human intelligence. This remains largely theoretical.
+
+The importance of AI in modern society cannot be overstated. It powers virtual assistants like Siri and Alexa, enables self-driving cars, improves medical diagnostics, and personalizes our online experiences. AI algorithms analyze vast amounts of data to identify patterns and make predictions, helping businesses make informed decisions and researchers make groundbreaking discoveries.
+
+As AI continues to advance, it raises important questions about ethics, privacy, and the future of work. Understanding AI is no longer optional but essential for anyone looking to navigate the modern world effectively.
