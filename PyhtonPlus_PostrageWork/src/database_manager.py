@@ -80,6 +80,63 @@ class DatabaseManager:
         finally:
             conn.close()
     
+    def reorder_all_ids(self):
+        """Renumber all essay IDs sequentially starting from 1"""
+        conn = self.get_connection()
+        if not conn:
+            return False
+        
+        try:
+            cursor = conn.cursor()
+            
+            # Get all essays ordered by current ID
+            cursor.execute("SELECT id, title, content FROM essays ORDER BY id")
+            essays = cursor.fetchall()
+            
+            if not essays:
+                return True
+            
+            # Create a temporary table
+            cursor.execute("""
+                CREATE TEMP TABLE essays_temp (
+                    new_id SERIAL PRIMARY KEY,
+                    title VARCHAR(500) NOT NULL,
+                    content TEXT NOT NULL
+                )
+            """)
+            
+            # Insert all essays into temp table (auto-assigns new sequential IDs)
+            for essay in essays:
+                cursor.execute(
+                    "INSERT INTO essays_temp (title, content) VALUES (%s, %s)",
+                    (essay[1], essay[2])
+                )
+            
+            # Clear original table
+            cursor.execute("DELETE FROM essays")
+            
+            # Copy back with new IDs
+            cursor.execute("""
+                INSERT INTO essays (id, title, content)
+                SELECT new_id, title, content FROM essays_temp
+            """)
+            
+            # Drop temp table
+            cursor.execute("DROP TABLE essays_temp")
+            
+            # Reset sequence to continue from the last ID
+            cursor.execute("SELECT setval('essays_id_seq', (SELECT MAX(id) FROM essays) + 1, false)")
+            
+            conn.commit()
+            cursor.close()
+            return True
+        except Error as e:
+            print(f"Error reordering IDs: {e}")
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+    
     def insert_essay(self, title, content, essay_id=None):
         """Insert a single essay into database with specific ID"""
         conn = self.get_connection()
@@ -182,7 +239,7 @@ class DatabaseManager:
             conn.close()
     
     def delete_essay(self, essay_id):
-        """Delete essay by ID"""
+        """Delete essay by ID and renumber all remaining essays"""
         conn = self.get_connection()
         if not conn:
             return False
@@ -193,9 +250,13 @@ class DatabaseManager:
             rows_deleted = cursor.rowcount
             conn.commit()
             cursor.close()
+            conn.close()
+            
+            # Renumber all IDs after deletion
+            if rows_deleted > 0:
+                self.reorder_all_ids()
+            
             return rows_deleted > 0
         except Error as e:
             print(f"Error deleting essay: {e}")
             return False
-        finally:
-            conn.close()
