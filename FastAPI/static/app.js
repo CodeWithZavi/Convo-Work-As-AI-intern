@@ -79,6 +79,7 @@ function displayRooms() {
                 ${room.is_available ? '✓ Available' : '✗ Occupied'}
             </span>
             <div class="card-actions">
+                <button class="btn btn-primary" onclick="showEditRoomForm(${room.id})">Edit</button>
                 <button class="btn btn-danger" onclick="deleteRoom(${room.id})">Delete</button>
             </div>
         </div>
@@ -129,6 +130,52 @@ async function deleteRoom(roomId) {
     } catch (error) {
         console.error('Error deleting room:', error);
         alert('Failed to delete room');
+    }
+}
+
+function showEditRoomForm(roomId) {
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    document.getElementById('editRoomId').value = room.id;
+    document.getElementById('editRoomNumber').value = room.room_number;
+    document.getElementById('editRoomType').value = room.room_type;
+    document.getElementById('editRoomPrice').value = room.price_per_night;
+    document.getElementById('editRoomAvailable').checked = room.is_available;
+
+    document.getElementById('editRoomForm').style.display = 'block';
+}
+
+function hideEditRoomForm() {
+    document.getElementById('editRoomForm').style.display = 'none';
+}
+
+async function updateRoom(event) {
+    event.preventDefault();
+
+    const roomId = parseInt(document.getElementById('editRoomId').value);
+    const updateData = {
+        room_number: document.getElementById('editRoomNumber').value,
+        room_type: document.getElementById('editRoomType').value,
+        price_per_night: parseFloat(document.getElementById('editRoomPrice').value),
+        is_available: document.getElementById('editRoomAvailable').checked
+    };
+
+    try {
+        const response = await fetch(`/api/rooms/${roomId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+
+        if (response.ok) {
+            hideEditRoomForm();
+            loadRooms();
+            alert('Room updated successfully!');
+        }
+    } catch (error) {
+        console.error('Error updating room:', error);
+        alert('Failed to update room');
     }
 }
 
@@ -188,6 +235,7 @@ function displayGuests() {
                         <td>${guest.email}</td>
                         <td>${guest.phone}</td>
                         <td>
+                            <button class="btn btn-primary" onclick="showEditGuestForm(${guest.id})">Edit</button>
                             <button class="btn btn-danger" onclick="deleteGuest(${guest.id})">Delete</button>
                         </td>
                     </tr>
@@ -240,6 +288,50 @@ async function deleteGuest(guestId) {
     } catch (error) {
         console.error('Error deleting guest:', error);
         alert('Failed to delete guest');
+    }
+}
+
+function showEditGuestForm(guestId) {
+    const guest = guests.find(g => g.id === guestId);
+    if (!guest) return;
+
+    document.getElementById('editGuestId').value = guest.id;
+    document.getElementById('editGuestName').value = guest.name;
+    document.getElementById('editGuestEmail').value = guest.email;
+    document.getElementById('editGuestPhone').value = guest.phone;
+
+    document.getElementById('editGuestForm').style.display = 'block';
+}
+
+function hideEditGuestForm() {
+    document.getElementById('editGuestForm').style.display = 'none';
+}
+
+async function updateGuest(event) {
+    event.preventDefault();
+
+    const guestId = parseInt(document.getElementById('editGuestId').value);
+    const updateData = {
+        name: document.getElementById('editGuestName').value,
+        email: document.getElementById('editGuestEmail').value,
+        phone: document.getElementById('editGuestPhone').value
+    };
+
+    try {
+        const response = await fetch(`/api/guests/${guestId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+
+        if (response.ok) {
+            hideEditGuestForm();
+            loadGuests();
+            alert('Guest updated successfully!');
+        }
+    } catch (error) {
+        console.error('Error updating guest:', error);
+        alert('Failed to update guest');
     }
 }
 
@@ -321,6 +413,7 @@ function displayBookings() {
                             <td>$${booking.total_price}</td>
                             <td>${booking.status}</td>
                             <td>
+                                <button class="btn btn-primary" onclick="showEditBookingForm(${booking.id})">Edit</button>
                                 <button class="btn btn-danger" onclick="cancelBooking(${booking.id})">Cancel</button>
                             </td>
                         </tr>
@@ -382,5 +475,67 @@ async function cancelBooking(bookingId) {
     } catch (error) {
         console.error('Error cancelling booking:', error);
         alert('Failed to cancel booking');
+    }
+}
+
+function showEditBookingForm(bookingId) {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    // Populate guest dropdown
+    const guestSelect = document.getElementById('editBookingGuest');
+    guestSelect.innerHTML = '<option value="">Select a guest</option>' +
+        guests.map(g => `<option value="${g.id}" ${g.id === booking.guest_id ? 'selected' : ''}>${g.name}</option>`).join('');
+
+    // Populate room dropdown (include current room even if not available)
+    const roomSelect = document.getElementById('editBookingRoom');
+    roomSelect.innerHTML = '<option value="">Select a room</option>' +
+        rooms.map(r => `<option value="${r.id}" ${r.id === booking.room_id ? 'selected' : ''}>${r.room_number} - ${r.room_type} ($${r.price_per_night}/night)${!r.is_available && r.id !== booking.room_id ? ' (Occupied)' : ''}</option>`).join('');
+
+    document.getElementById('editBookingId').value = booking.id;
+    document.getElementById('editCheckInDate').value = booking.check_in_date;
+    document.getElementById('editCheckOutDate').value = booking.check_out_date;
+    document.getElementById('editTotalPrice').value = booking.total_price;
+    document.getElementById('editBookingStatus').value = booking.status;
+
+    document.getElementById('editBookingForm').style.display = 'block';
+}
+
+function hideEditBookingForm() {
+    document.getElementById('editBookingForm').style.display = 'none';
+}
+
+async function updateBooking(event) {
+    event.preventDefault();
+
+    const bookingId = parseInt(document.getElementById('editBookingId').value);
+    const updateData = {
+        guest_id: parseInt(document.getElementById('editBookingGuest').value),
+        room_id: parseInt(document.getElementById('editBookingRoom').value),
+        check_in_date: document.getElementById('editCheckInDate').value,
+        check_out_date: document.getElementById('editCheckOutDate').value,
+        total_price: parseFloat(document.getElementById('editTotalPrice').value),
+        status: document.getElementById('editBookingStatus').value
+    };
+
+    try {
+        const response = await fetch(`/api/bookings/${bookingId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+
+        if (response.ok) {
+            hideEditBookingForm();
+            loadBookings();
+            loadRooms(); // Refresh rooms to update availability
+            alert('Booking updated successfully!');
+        } else {
+            const error = await response.json();
+            alert(error.detail || 'Failed to update booking');
+        }
+    } catch (error) {
+        console.error('Error updating booking:', error);
+        alert('Failed to update booking');
     }
 }
