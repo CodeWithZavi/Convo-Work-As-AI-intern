@@ -3,12 +3,21 @@ from typing import Optional
 
 # ===================== ROOM MODELS =====================
 
-class Room(BaseModel):
-    id: int
+class RoomCreate(BaseModel):
     room_number: str
     room_type: str  # Single, Double, Suite
     price_per_night: float
     is_available: bool = True
+
+class Room(BaseModel):
+    id: int
+    room_number: str
+    room_type: str
+    price_per_night: float
+    is_available: bool = True
+
+    class Config:
+        from_attributes = True
 
 class UpdateRoomModel(BaseModel):
     room_number: Optional[str] = None
@@ -18,11 +27,19 @@ class UpdateRoomModel(BaseModel):
 
 # ===================== GUEST MODELS =====================
 
+class GuestCreate(BaseModel):
+    name: str
+    email: str
+    phone: str
+
 class Guest(BaseModel):
     id: int
     name: str
     email: str
     phone: str
+
+    class Config:
+        from_attributes = True
 
 class UpdateGuestModel(BaseModel):
     name: Optional[str] = None
@@ -31,6 +48,14 @@ class UpdateGuestModel(BaseModel):
 
 # ===================== BOOKING MODELS =====================
 
+class BookingCreate(BaseModel):
+    guest_id: int
+    room_id: int
+    check_in_date: str
+    check_out_date: str
+    total_price: float
+    status: str = "confirmed"
+
 class Booking(BaseModel):
     id: int
     guest_id: int
@@ -38,7 +63,10 @@ class Booking(BaseModel):
     check_in_date: str
     check_out_date: str
     total_price: float
-    status: str = "confirmed"  # confirmed, checked-in, checked-out, cancelled
+    status: str = "confirmed"
+
+    class Config:
+        from_attributes = True
 
 class UpdateBookingModel(BaseModel):
     guest_id: Optional[int] = None

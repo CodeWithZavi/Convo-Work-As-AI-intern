@@ -90,7 +90,6 @@ async function addRoom(event) {
     event.preventDefault();
 
     const room = {
-        id: nextRoomId++,
         room_number: document.getElementById('roomNumber').value,
         room_type: document.getElementById('roomType').value,
         price_per_night: parseFloat(document.getElementById('roomPrice').value),
@@ -249,7 +248,6 @@ async function addGuest(event) {
     event.preventDefault();
 
     const guest = {
-        id: nextGuestId++,
         name: document.getElementById('guestName').value,
         email: document.getElementById('guestEmail').value,
         phone: document.getElementById('guestPhone').value
@@ -428,7 +426,6 @@ async function addBooking(event) {
     event.preventDefault();
 
     const booking = {
-        id: nextBookingId++,
         guest_id: parseInt(document.getElementById('bookingGuest').value),
         room_id: parseInt(document.getElementById('bookingRoom').value),
         check_in_date: document.getElementById('checkInDate').value,
