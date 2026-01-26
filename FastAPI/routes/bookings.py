@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
-from models import BookingCreate, UpdateBookingModel
-from db_models import BookingDB, RoomDB, GuestDB
-from db_config import get_db
+from fastapi import APIRouter, HTTPException, Depends #for route handling and error management and dependency injection
+from sqlalchemy.orm import Session #for database session management
+from models import BookingCreate, UpdateBookingModel #importing Pydantic models for booking creation and update
+from db_models import BookingDB, RoomDB, GuestDB    #importing database models for bookings, rooms, and guests
+from db_config import get_db #importing function to get database session
 
-router = APIRouter(prefix="/api/bookings", tags=["bookings"])
+router = APIRouter(prefix="/api/bookings", tags=["bookings"]) #defining API router for bookings with specified prefix and tags
 
 # ===================== BOOKING ENDPOINTS =====================
 
