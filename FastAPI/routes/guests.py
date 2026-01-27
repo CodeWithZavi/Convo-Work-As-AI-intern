@@ -5,6 +5,9 @@ from models import GuestCreate, UpdateGuestModel
 from db_models import GuestDB
 from db_config import get_db
 
+router = APIRouter(prefix="/api/guests", tags=["guests"])
+
+# ===================== GUEST ENDPOINTS =====================
 
 @router.get("")
 def get_guests(db: Session = Depends(get_db)):
