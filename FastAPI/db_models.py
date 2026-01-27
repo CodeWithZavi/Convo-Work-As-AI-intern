@@ -14,10 +14,8 @@ class RoomDB(Base):
     is_available = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
     # Relationship
     bookings = relationship("BookingDB", back_populates="room")
-
 
 # ===================== GUEST MODEL =====================
 
