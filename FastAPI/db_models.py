@@ -4,6 +4,19 @@ from db_config import Base
 from datetime import datetime
 
 # ===================== ROOM MODEL =====================
+class RoomDB(Base):
+    __tablename__ = "rooms"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    room_number = Column(String, unique=True, nullable=False, index=True)
+    room_type = Column(String, nullable=False)  # Single, Double, Suite
+    price_per_night = Column(Float, nullable=False)
+    is_available = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    bookings = relationship("BookingDB", back_populates="room")
 
 
 # ===================== GUEST MODEL =====================
