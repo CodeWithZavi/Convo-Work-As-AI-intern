@@ -40,8 +40,8 @@ class BookingDB(Base):
     __tablename__ = "bookings"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    guest_id = Column(Integer, ForeignKey("guests.id"), nullable=False)
-    room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False)
+    guest_id = Column(Integer, ForeignKey("guests.id", ondelete="CASCADE"), nullable=False)
+    room_id = Column(Integer, ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False)
     check_in_date = Column(String, nullable=False)
     check_out_date = Column(String, nullable=False)
     total_price = Column(Float, nullable=False)

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends #for route handling and error management and dependency injection
 from sqlalchemy.orm import Session #for database session management
+from sqlalchemy import func #for SQL functions like max()
 from models import BookingCreate, UpdateBookingModel #importing Pydantic models for booking creation and update
 from db_models import BookingDB, RoomDB, GuestDB    #importing database models for bookings, rooms, and guests
 from db_config import get_db #importing function to get database session
@@ -37,8 +38,13 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db)):
     if not room.is_available:
         raise HTTPException(status_code=400, detail="Room is not available")
     
+    # Get the maximum ID and add 1 for new booking
+    max_id = db.query(func.max(BookingDB.id)).scalar() or 0
+    next_id = max_id + 1
+    
     # Create booking
     db_booking = BookingDB(
+        id=next_id,
         guest_id=booking.guest_id,
         room_id=booking.room_id,
         check_in_date=booking.check_in_date,
@@ -120,4 +126,12 @@ def cancel_booking(booking_id: int, db: Session = Depends(get_db)):
     
     db.delete(booking)
     db.commit()
-    return {"message": "Booking cancelled successfully", "id": booking_id}
+    
+    # Reorder IDs sequentially after deletion
+    remaining_bookings = db.query(BookingDB).order_by(BookingDB.id).all()
+    for index, booking_item in enumerate(remaining_bookings, start=1):
+        if booking_item.id != index:
+            booking_item.id = index
+    db.commit()
+    
+    return {"message": "Booking cancelled and IDs reordered successfully", "id": booking_id}

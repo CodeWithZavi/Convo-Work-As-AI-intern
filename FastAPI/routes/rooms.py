@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from models import RoomCreate, UpdateRoomModel
 from db_models import RoomDB
 from db_config import get_db
@@ -36,7 +37,12 @@ def add_room(room: RoomCreate, db: Session = Depends(get_db)):
     if existing_room:
         raise HTTPException(status_code=400, detail="Room number already exists")
     
+    # Get the maximum ID and add 1 for new room
+    max_id = db.query(func.max(RoomDB.id)).scalar() or 0
+    next_id = max_id + 1
+    
     db_room = RoomDB(
+        id=next_id,
         room_number=room.room_number,
         room_type=room.room_type,
         price_per_night=room.price_per_night,
@@ -83,19 +89,31 @@ def delete_room(room_id: int, db: Session = Depends(get_db)):
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
     
-    # Check if room has active bookings
+    # Delete all bookings associated with this room first
     from db_models import BookingDB
-    active_bookings = db.query(BookingDB).filter(
-        BookingDB.room_id == room_id,
-        BookingDB.status.in_(["confirmed", "checked-in"])
-    ).count()
+    bookings = db.query(BookingDB).filter(BookingDB.room_id == room_id).all()
     
-    if active_bookings > 0:
-        raise HTTPException(
-            status_code=400, 
-            detail="Cannot delete room with active bookings"
-        )
+    for booking in bookings:
+        db.delete(booking)
     
+    # Delete the room
     db.delete(room)
     db.commit()
+    
+    # Reorder room IDs sequentially after deletion
+    remaining_rooms = db.query(RoomDB).order_by(RoomDB.id).all()
+    for index, room_item in enumerate(remaining_rooms, start=1):
+        if room_item.id != index:
+            room_item.id = index
+    
+    # Reorder booking IDs if any bookings were deleted
+    if bookings:
+        remaining_bookings = db.query(BookingDB).order_by(BookingDB.id).all()
+        for index, booking_item in enumerate(remaining_bookings, start=1):
+            if booking_item.id != index:
+                booking_item.id = index
+    
+    db.commit()
+    
+    return {"message": "Room and associated bookings deleted, IDs reordered successfully", "id": room_id}
     return {"message": "Room deleted successfully", "id": room_id}

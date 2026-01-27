@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from models import GuestCreate, UpdateGuestModel
 from db_models import GuestDB
 from db_config import get_db
@@ -30,7 +31,12 @@ def add_guest(guest: GuestCreate, db: Session = Depends(get_db)):
     if existing_guest:
         raise HTTPException(status_code=400, detail="Email already registered")
     
+    # Get the maximum ID and add 1 for new guest
+    max_id = db.query(func.max(GuestDB.id)).scalar() or 0
+    next_id = max_id + 1
+    
     db_guest = GuestDB(
+        id=next_id,
         name=guest.name,
         email=guest.email,
         phone=guest.phone
@@ -73,19 +79,34 @@ def delete_guest(guest_id: int, db: Session = Depends(get_db)):
     if not guest:
         raise HTTPException(status_code=404, detail="Guest not found")
     
-    # Check if guest has active bookings
-    from db_models import BookingDB
-    active_bookings = db.query(BookingDB).filter(
-        BookingDB.guest_id == guest_id,
-        BookingDB.status.in_(["confirmed", "checked-in"])
-    ).count()
+    # Delete all bookings associated with this guest first
+    from db_models import BookingDB, RoomDB
+    bookings = db.query(BookingDB).filter(BookingDB.guest_id == guest_id).all()
     
-    if active_bookings > 0:
-        raise HTTPException(
-            status_code=400, 
-            detail="Cannot delete guest with active bookings"
-        )
+    # Make rooms available again for deleted bookings
+    for booking in bookings:
+        room = db.query(RoomDB).filter(RoomDB.id == booking.room_id).first()
+        if room:
+            room.is_available = True
+        db.delete(booking)
     
+    # Delete the guest
     db.delete(guest)
     db.commit()
-    return {"message": "Guest deleted successfully", "id": guest_id}
+    
+    # Reorder guest IDs sequentially after deletion
+    remaining_guests = db.query(GuestDB).order_by(GuestDB.id).all()
+    for index, guest_item in enumerate(remaining_guests, start=1):
+        if guest_item.id != index:
+            guest_item.id = index
+    
+    # Reorder booking IDs if any bookings were deleted
+    if bookings:
+        remaining_bookings = db.query(BookingDB).order_by(BookingDB.id).all()
+        for index, booking_item in enumerate(remaining_bookings, start=1):
+            if booking_item.id != index:
+                booking_item.id = index
+    
+    db.commit()
+    
+    return {"message": "Guest and associated bookings deleted, IDs reordered successfully", "id": guest_id}
